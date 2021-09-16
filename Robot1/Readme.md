@@ -31,13 +31,7 @@ dotnet publish -c Release
 docker build -t pb-image -f Dockerfile .
 
 
-Потом создаём экземпляр контейнера командой
-
-
-docker create --name pls b-cont pb-image
-
-
-и запускаем его командой
+Потом создаём экземпляр контейнера и запускаем его командой
 
 
 docker run --name=pb-cont -it --expose=5001 -p 5001:5001 --mount type=bind,source=/DData/Pb/Logs,target=/App/Logs  -d pb-image

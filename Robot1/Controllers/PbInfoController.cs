@@ -12,6 +12,7 @@ using System.Net;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Globalization;
+using System.Threading;
 using Newtonsoft.Json;
 
 namespace Pb.Controllers {
@@ -98,6 +99,9 @@ namespace Pb.Controllers {
             
             var resp = restClient.Execute(req);
             if (resp.StatusCode != HttpStatusCode.OK) return "";
+
+            Thread.Sleep(1000);
+
             string rawJson = resp.Content;
             //System.IO.File.WriteAllText("answer.json", rawJson);
 
@@ -117,6 +121,9 @@ namespace Pb.Controllers {
 
             var resp2 = restClient.Execute(req2);
             if (resp2.StatusCode != HttpStatusCode.OK) return "";
+
+            Thread.Sleep(1200);
+
             string rawJson2 = resp2.Content;
 
             j = JObject.Parse(rawJson2);
@@ -155,9 +162,17 @@ namespace Pb.Controllers {
             k.ShortName = (string)v.SelectToken("$.НаимЮЛСокр");
             k.LongName = (string)v.SelectToken("$.НаимЮЛПолн");
             string t_regDate = (string)v.SelectToken("$.ДатаРег");
-            k.RegDate = DateTime.ParseExact(t_regDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            bool v1=false, v2=false;
+            DateTime t1=DateTime.Now, t2=DateTime.Now; ;
+            if (!string.IsNullOrEmpty(t_regDate))
+                v1 = DateTime.TryParseExact(t_regDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t1);
+            if (v1)
+                k.RegDate = t1;
             string t_postUchetDate = (string)v.SelectToken("$.ДатаПостУч");
-            k.RegDate = DateTime.ParseExact(t_postUchetDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            if (!string.IsNullOrEmpty(t_postUchetDate))
+                v2 = DateTime.TryParseExact(t_postUchetDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t2);
+            if (v2)
+                k.PostUchetDate = t2;
             k.Ogrn = (string)v.SelectToken("$.ОГРН");
             k.Inn = (string)v.SelectToken("$.ИНН");
             k.Kpp = (string)v.SelectToken("$.КПП");
@@ -183,8 +198,8 @@ namespace Pb.Controllers {
     public class CompanyInfo {
         public string ShortName { get; set; }
         public string LongName { get; set; }
-        public DateTime RegDate { get; set; }
-        public DateTime PostUchetDate { get; set; }
+        public DateTime? RegDate { get; set; }
+        public DateTime? PostUchetDate { get; set; }
         public string Ogrn { get; set; }
         public string Inn { get; set; }
         public string Kpp { get; set; }

@@ -185,7 +185,7 @@ namespace Pb.Controllers {
                     v2 = DateTime.TryParseExact(t_postUchetDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t2);
                 if (v2)
                     k.PostUchetDate = t2;
-                k.Ogrn = (string)v.SelectToken("$.ДатаОГРНИП");
+                k.Ogrn = (string)v.SelectToken("$.ОГРНИП");
                 k.Inn = (string)v.SelectToken("$.ИННФЛ");
                 k.liquidated = (bool)j.SelectToken("$.liquidated");
                 string tmpT = (string)j.SelectToken("$.token");

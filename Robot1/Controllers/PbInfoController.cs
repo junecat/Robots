@@ -103,10 +103,24 @@ namespace Pb.Controllers {
             Thread.Sleep(1000);
 
             string rawJson = resp.Content;
+            bool flagIp = false;
+            CompanyInfo k = new CompanyInfo();
             //System.IO.File.WriteAllText("answer.json", rawJson);
 
             JObject j = JObject.Parse(rawJson);
             JToken jitem = j.SelectToken("$.ul.data[0].token");
+            if (jitem == null) {
+                // возможно, это - ИП?
+                JToken jitemIp = j.SelectToken("$.ip");
+                if (jitemIp != null) {
+                    flagIp = true;
+                    JToken jitemIpData = j.SelectToken("$.ip.data[0]");
+                    jitem = j.SelectToken("$.ip.data[0].token");
+                    k.isIp = true;
+                    k.ShortName = k.LongName = (string)jitemIpData.SelectToken("$.namec");
+                }
+                else return "";
+            }
             if (jitem == null) return "";
             string token = (string)jitem;
 
@@ -158,25 +172,48 @@ namespace Pb.Controllers {
 
             j = JObject.Parse(rawJson3);
             JToken v = j.SelectToken("$.vyp");
-            CompanyInfo k = new CompanyInfo();
-            k.ShortName = (string)v.SelectToken("$.НаимЮЛСокр");
-            k.LongName = (string)v.SelectToken("$.НаимЮЛПолн");
-            string t_regDate = (string)v.SelectToken("$.ДатаРег");
-            bool v1=false, v2=false;
-            DateTime t1=DateTime.Now, t2=DateTime.Now; ;
-            if (!string.IsNullOrEmpty(t_regDate))
-                v1 = DateTime.TryParseExact(t_regDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t1);
-            if (v1)
-                k.RegDate = t1;
-            string t_postUchetDate = (string)v.SelectToken("$.ДатаПостУч");
-            if (!string.IsNullOrEmpty(t_postUchetDate))
-                v2 = DateTime.TryParseExact(t_postUchetDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t2);
-            if (v2)
-                k.PostUchetDate = t2;
-            k.Ogrn = (string)v.SelectToken("$.ОГРН");
-            k.Inn = (string)v.SelectToken("$.ИНН");
-            k.Kpp = (string)v.SelectToken("$.КПП");
-            k.LegalAddress = (string)v.SelectToken("$.Адрес");
+            if (flagIp) {
+                string t_regDate = (string)v.SelectToken("$.ДатаПостУч");
+                bool v1 = false, v2 = false;
+                DateTime t1 = DateTime.Now, t2 = DateTime.Now; ;
+                if (!string.IsNullOrEmpty(t_regDate))
+                    v1 = DateTime.TryParseExact(t_regDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t1);
+                if (v1)
+                    k.RegDate = t1;
+                string t_postUchetDate = (string)v.SelectToken("$.ДатаОГРНИП");
+                if (!string.IsNullOrEmpty(t_postUchetDate))
+                    v2 = DateTime.TryParseExact(t_postUchetDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t2);
+                if (v2)
+                    k.PostUchetDate = t2;
+                k.Ogrn = (string)v.SelectToken("$.ДатаОГРНИП");
+                k.Inn = (string)v.SelectToken("$.ИННФЛ");
+                k.liquidated = (bool)j.SelectToken("$.liquidated");
+                string tmpT = (string)j.SelectToken("$.token");
+                k.TempCompanyUrl = $"https://pb.nalog.ru/company.html?token={tmpT}";
+                k.PdfTempUrl = (string)j.SelectToken("$.rsmppdf"); 
+            }
+            else {
+                k.isIp = false;
+                k.ShortName = (string)v.SelectToken("$.НаимЮЛСокр");
+                k.LongName = (string)v.SelectToken("$.НаимЮЛПолн");
+                string t_regDate = (string)v.SelectToken("$.ДатаРег");
+                bool v1 = false, v2 = false;
+                DateTime t1 = DateTime.Now, t2 = DateTime.Now; ;
+                if (!string.IsNullOrEmpty(t_regDate))
+                    v1 = DateTime.TryParseExact(t_regDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t1);
+                if (v1)
+                    k.RegDate = t1;
+                string t_postUchetDate = (string)v.SelectToken("$.ДатаПостУч");
+                if (!string.IsNullOrEmpty(t_postUchetDate))
+                    v2 = DateTime.TryParseExact(t_postUchetDate, "yyyy-MM-dd", new CultureInfo("en-US"), DateTimeStyles.None, out t2);
+                if (v2)
+                    k.PostUchetDate = t2;
+                k.Ogrn = (string)v.SelectToken("$.ОГРН");
+                k.Inn = (string)v.SelectToken("$.ИНН");
+                k.Kpp = (string)v.SelectToken("$.КПП");
+                k.LegalAddress = (string)v.SelectToken("$.Адрес");
+                k.liquidated = (bool)j.SelectToken("$.liquidated");
+            }
 
             string answ = JsonConvert.SerializeObject(k);
 
@@ -204,6 +241,10 @@ namespace Pb.Controllers {
         public string Inn { get; set; }
         public string Kpp { get; set; }
         public string LegalAddress { get; set; }
+        public bool isIp { get; set; }
+        public bool liquidated {get;set;}
+        public string TempCompanyUrl { get; set; }
+        public string PdfTempUrl { get; set; }
 
     }
 }

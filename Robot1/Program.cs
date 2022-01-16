@@ -16,10 +16,10 @@ namespace Pb {
         public static void Main(string[] args) {
 
             Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
-    .WriteTo.Console()
-    .WriteTo.File("Logs/CompanyIdRobot_.log", rollingInterval: RollingInterval.Day)
-    .CreateLogger();
+            .MinimumLevel.Debug()
+            .WriteTo.Console()
+            .WriteTo.File("Logs/CompanyIdRobot_.log", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
 
             Log.Information(new string('=', 60));
             Log.Information("Running CompanyIdRobot ver 0.1");

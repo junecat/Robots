@@ -95,7 +95,6 @@ namespace Pb.Controllers {
             req.AddParameter("ifnsDoc", "");
             req.AddParameter("dateFromDoc", "");
             req.AddParameter("dateToDoc", "");
-
             
             var resp = restClient.Execute(req);
             if (resp.StatusCode != HttpStatusCode.OK) return "";
@@ -136,7 +135,7 @@ namespace Pb.Controllers {
             var resp2 = restClient.Execute(req2);
             if (resp2.StatusCode != HttpStatusCode.OK) return "";
 
-            Thread.Sleep(1200);
+            
 
             string rawJson2 = resp2.Content;
 
@@ -150,24 +149,32 @@ namespace Pb.Controllers {
             token = (string)jitem_token;
             bool captchaRequired = (bool)jitem_capure;
 
-            if (!captchaRequired) {
+            if (captchaRequired) {
                 Log.Error("captcha required!");
                 //return "";
             }
 
-            RestRequest req3 = new RestRequest("/company-proc.json", Method.POST);
-            req3.Timeout = 5000;
-            req3.AddCookie("JSESSIONID", jsessionId);
-            req3.AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-            req3.AddHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36");
-            req3.AddHeader("Referer", "https://pb.nalog.ru/company.html?token=" + token);
-            req3.AddParameter("token", token);
-            req3.AddParameter("id", id);
-            req3.AddParameter("method", "get-response");
-
-            var resp3 = restClient.Execute(req3);
-            if (resp3.StatusCode != HttpStatusCode.OK) return "";
-            string rawJson3 = resp3.Content;
+            int reqCnt = 0;
+            string rawJson3 = null;
+            do {
+                RestRequest req3 = new RestRequest("/company-proc.json", Method.POST);
+                req3.Timeout = 5000;
+                req3.AddCookie("JSESSIONID", jsessionId);
+                req3.AddHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                req3.AddHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.63 Safari/537.36");
+                req3.AddHeader("Referer", "https://pb.nalog.ru/company.html?token=" + token);
+                req3.AddParameter("token", token);
+                req3.AddParameter("id", id);
+                req3.AddParameter("method", "get-response");
+                var resp3 = restClient.Execute(req3);
+                if (resp3.StatusCode == HttpStatusCode.OK) {
+                    rawJson3 = resp3.Content;
+                    Log.Information($"begin of resp3.Content={resp3.Content.Substring(0, Math.Min(resp3.Content.Length, 50))}");
+                }
+                else
+                    Log.Information($"req3.StatusCode={resp3.StatusCode.ToString()}");
+                Thread.Sleep(2000);
+            } while (reqCnt < 25 && (string.IsNullOrEmpty(rawJson3) || rawJson3 == "null"));
             System.IO.File.WriteAllText("answer3.json", rawJson3);
 
             j = JObject.Parse(rawJson3);

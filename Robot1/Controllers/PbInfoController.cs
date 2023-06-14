@@ -14,6 +14,7 @@ using System.IO;
 using System.Globalization;
 using System.Threading;
 using Newtonsoft.Json;
+using System.Text.RegularExpressions;
 
 namespace Pb.Controllers {
     [ApiController]
@@ -174,8 +175,16 @@ namespace Pb.Controllers {
                 else
                     Log.Information($"req3.StatusCode={resp3.StatusCode.ToString()}");
                 Thread.Sleep(2000);
-            } while (reqCnt < 25 && (string.IsNullOrEmpty(rawJson3) || rawJson3 == "null"));
-            System.IO.File.WriteAllText("answer3.json", rawJson3);
+            } while (reqCnt++ < 50 && (string.IsNullOrEmpty(rawJson3) || rawJson3 == "null"));
+            if (string.IsNullOrEmpty(rawJson3) || rawJson3 == "null") {
+                string tmpFN = ToLegalFn( $"{searchQuery}_{DateTime.Now.ToShortDateString()}_{DateTime.Now.ToShortTimeString()}.json" );
+                Log.Information($"Answer on searchQuery={searchQuery} saved to {tmpFN}");
+                System.IO.File.WriteAllText(tmpFN, rawJson3);
+            }
+            else {
+                Log.Error("Response from server not received within fixed time");
+                return ("ERROR: response from server not received within fixed time");
+            }
 
             j = JObject.Parse(rawJson3);
             JToken v = j.SelectToken("$.vyp");
@@ -226,6 +235,10 @@ namespace Pb.Controllers {
 
             return answ;
         }
+
+        private string ToLegalFn(string fn) => Regex.Replace(fn, @"[^\w\.-]", "-");
+
+
 
 
 
